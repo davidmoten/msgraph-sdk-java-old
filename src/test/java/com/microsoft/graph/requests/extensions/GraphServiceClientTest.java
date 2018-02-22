@@ -21,7 +21,8 @@ public class GraphServiceClientTest {
         final List<String> logs = new CopyOnWriteArrayList<String>();
         IGraphServiceClient client = GraphServiceClient //
                 .builder() //
-                .authenticationProvider(createAuthProviderProvider()).logger(createLoggerProvider(logs)) //
+                .authenticationProvider(createAuthProviderProvider()) //
+                .logger(createLoggerProvider(logs)) //
                 .buildClient();
         client.getLogger().logDebug("hello");
         client.getAuthenticationProvider().authenticateRequest(null);
@@ -47,7 +48,6 @@ public class GraphServiceClientTest {
                     log.logDebug("created authProvider");
                 }
                 return auth;
-
             }
         };
     }
@@ -87,5 +87,5 @@ public class GraphServiceClientTest {
             }
         };
     }
-
+    
 }
