@@ -63,11 +63,11 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
      */
     public static final class Builder {
 
-        ILogger logger;
-        ISerializer serializer;
-        IHttpProvider httpProvider;
-        IAuthenticationProvider authenticationProvider;
-        IExecutors executors;
+        IClientConfigProvider<? extends ILogger> loggerProvider;
+        IClientConfigProvider<? extends ISerializer> serializerProvider;
+        IClientConfigProvider<? extends IHttpProvider> httpProviderProvider;
+        IClientConfigProvider<? extends IAuthenticationProvider> authenticationProviderProvider;
+        IClientConfigProvider<? extends IExecutors> executorsProvider;
         IClientConfigFactory configFactory;
 
         Builder() {
@@ -82,7 +82,18 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 serializer(final ISerializer serializer) {
-            this.serializer = serializer;
+            return serializer(ConstantProvider.create(serializer));
+        }
+        
+        /**
+         * Sets the serializer provider
+         * 
+         * @param serializer
+         *            The serializer
+         * @return the instance of this builder
+         */
+        public Builder2 serializer(final IClientConfigProvider<? extends ISerializer> serializerProvider) {
+            this.serializerProvider = serializerProvider;
             return new Builder2(this);
         }
 
@@ -94,9 +105,21 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 httpProvider(final IHttpProvider httpProvider) {
-            this.httpProvider = httpProvider;
+            return httpProvider(ConstantProvider.create(httpProvider));
+        }
+        
+        /**
+         * Sets the httpProvider provider
+         * 
+         * @param httpProvider
+         *            The httpProvider
+         * @return the instance of this builder
+         */
+        public Builder2 httpProvider(final IClientConfigProvider<? extends IHttpProvider> httpProviderProvider) {
+            this.httpProviderProvider =httpProviderProvider;
             return new Builder2(this);
         }
+
 
         /**
          * Sets the authentication provider
@@ -106,7 +129,18 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 authenticationProvider(final IAuthenticationProvider authenticationProvider) {
-            this.authenticationProvider = authenticationProvider;
+            return authenticationProvider(ConstantProvider.create(authenticationProvider));
+        }
+        
+        /**
+         * Sets the authentication provider
+         * 
+         * @param authenticationProvider
+         *            The authentication provider
+         * @return the instance of this builder
+         */
+        public Builder2 authenticationProvider(final IClientConfigProvider<IAuthenticationProvider> authenticationProviderProvider) {
+            this.authenticationProviderProvider = authenticationProviderProvider;
             return new Builder2(this);
         }
 
@@ -118,9 +152,21 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 executors(final IExecutors executors) {
-            this.executors = executors;
+            return executors(ConstantProvider.create(executors));
+        }
+        
+        /**
+         * Sets the executors
+         * 
+         * @param executors
+         *            The executors
+         * @return the instance of this builder
+         */
+        public Builder2 executors(final IClientConfigProvider<IExecutors> executorsProvider) {
+            this.executorsProvider = executorsProvider;
             return new Builder2(this);
         }
+
 
         /**
          * Sets the logger
@@ -130,7 +176,18 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 logger(final ILogger logger) {
-            this.logger = logger;
+            return logger(ConstantProvider.create(logger));
+        }
+        
+        /**
+         * Sets the logger provider
+         * 
+         * @param loggerProvider
+         *            The logger provider
+         * @return the instance of this builder
+         */
+        public Builder2 logger(final IClientConfigProvider<ILogger> loggerProvider) {
+            this.loggerProvider = loggerProvider;
             return new Builder2(this);
         }
 
@@ -169,8 +226,8 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
 
                 @Override
                 public IAuthenticationProvider getAuthenticationProvider(IClientConfigFactory factory) {
-                    if (Builder.this.authenticationProvider != null) {
-                        return Builder.this.authenticationProvider;
+                    if (Builder.this.authenticationProviderProvider != null) {
+                        return Builder.this.authenticationProviderProvider.get(this);
                     } else if (factory != null){
                         return factory.getAuthenticationProvider(this);
                     } else {
@@ -180,33 +237,33 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
 
                 @Override
                 public IExecutors getExecutors(IClientConfigFactory factory) {
-                    if (Builder.this.executors != null) {
-                        return Builder.this.executors;
+                    if (Builder.this.executorsProvider != null) {
+                        return Builder.this.executorsProvider.get(this);
                     } else if (factory!=null) {
                         return factory.getExecutors(this);
                     } else {
-                        return new DefaultExecutors(getLogger(factory));
+                        return new DefaultExecutors(getLogger(this));
                     }
                 }
 
                 @Override
                 public IHttpProvider getHttpProvider(IClientConfigFactory factory) {
-                    if (Builder.this.httpProvider != null) {
-                        return Builder.this.httpProvider;
+                    if (Builder.this.httpProviderProvider != null) {
+                        return Builder.this.httpProviderProvider.get(this);
                     } else if (factory != null){
                         return factory.getHttpProvider(this);
                     } else {
-                        return new DefaultHttpProvider(getSerializer(factory),
-                                getAuthenticationProvider(factory),
-                                getExecutors(factory),
-                                getLogger(factory)); 
+                        return new DefaultHttpProvider(getSerializer(this),
+                                getAuthenticationProvider(this),
+                                getExecutors(this),
+                                getLogger(this)); 
                     }
                 }
 
                 @Override
                 public ILogger getLogger(IClientConfigFactory factory) {
-                    if (Builder.this.logger != null) {
-                        return Builder.this.logger;
+                    if (Builder.this.loggerProvider != null) {
+                        return Builder.this.loggerProvider.get(this);
                     } else if (factory != null){
                         return factory.getLogger(this);
                     } else {
@@ -216,17 +273,18 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
 
                 @Override
                 public ISerializer getSerializer(IClientConfigFactory factory) {
-                    if (Builder.this.serializer != null) {
-                        return Builder.this.serializer;
+                    if (Builder.this.serializerProvider != null) {
+                        return Builder.this.serializerProvider.get(this);
                     } else if (factory != null ){
                         return factory.getSerializer(this);
                     } else {
-                        return new DefaultSerializer(getLogger(factory));
+                        return new DefaultSerializer(getLogger(this));
                     }
                 }
 
             };
             GraphServiceClient client = new GraphServiceClient();
+            //note that configFactory may be null at this point
             client.setAuthenticationProvider(cf.getAuthenticationProvider(configFactory));
             client.setExecutors(cf.getExecutors(configFactory));
             client.setHttpProvider(cf.getHttpProvider(configFactory));
@@ -253,7 +311,7 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 serializer(final ISerializer serializer) {
-            b.serializer = serializer;
+            b.serializer(serializer);
             return this;
         }
 
@@ -265,7 +323,7 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 httpProvider(final IHttpProvider httpProvider) {
-            b.httpProvider = httpProvider;
+            b.httpProvider(httpProvider);
             return this;
         }
 
@@ -277,7 +335,7 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 authenticationProvider(final IAuthenticationProvider authenticationProvider) {
-            b.authenticationProvider = authenticationProvider;
+            b.authenticationProvider(authenticationProvider);
             return this;
         }
 
@@ -289,7 +347,7 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 executors(final IExecutors executors) {
-            b.executors = executors;
+            b.executors(executors);
             return this;
         }
 
@@ -301,7 +359,7 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
          * @return the instance of this builder
          */
         public Builder2 logger(final ILogger logger) {
-            b.logger = logger;
+            b.logger(logger);
             return this;
         }
 
@@ -333,5 +391,25 @@ public class GraphServiceClient extends BaseGraphServiceClient implements IGraph
         public IGraphServiceClient buildClient() throws ClientException {
             return client;
         }
+    }
+
+    
+    private static final class ConstantProvider<T> implements IClientConfigProvider<T> {
+
+        private final T value;
+
+        private ConstantProvider(T value) {
+            this.value = value;
+        }
+        
+        static <T> ConstantProvider<T> create(T value) {
+            return new ConstantProvider<T>(value);
+        }
+        
+        @Override
+        public T get(IClientConfigFactory factory) {
+            return value;
+        }
+        
     }
 }
